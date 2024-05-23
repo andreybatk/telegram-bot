@@ -18,7 +18,7 @@ namespace AATelegramBot
         private static ITelegramBotClient _botClient;
         private static ReceiverOptions _receiverOptions;
         private static ConcurrentDictionary<long, UserRegistrationState> _registrationStates = new ConcurrentDictionary<long, UserRegistrationState>();
-        private static ConcurrentDictionary<long, bool> __changePrefixes = new ConcurrentDictionary<long, bool>();
+        private static ConcurrentDictionary<long, bool> _changePrefixes = new ConcurrentDictionary<long, bool>();
         private static List<string> _admins;
 
         private readonly IUserRepository _userRepository;
@@ -67,22 +67,31 @@ namespace AATelegramBot
                             var user = message.From;
                             Console.WriteLine($"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}");
 
+                            if (message.Text == "/start" || message.Text == "/stop")
+                            {
+                                if (_registrationStates.ContainsKey(message.Chat.Id))
+                                {
+                                    _registrationStates.TryRemove(message.Chat.Id, out var registrationState);
+                                }
+                                if (_changePrefixes.ContainsKey(message.Chat.Id))
+                                {
+                                    _changePrefixes.TryRemove(message.Chat.Id, out bool value);
+                                }
+                                await HandleStartCommand(message);
+                            }
+
                             if (_registrationStates.ContainsKey(message.Chat.Id))
                             {
                                 await HandleUserRegistrationStep(message);
                                 return;
                             }
 
-                            if (__changePrefixes.ContainsKey(message.Chat.Id))
+                            if (_changePrefixes.ContainsKey(message.Chat.Id))
                             {
                                 await HandleConfirmChangePrefix(message);
                                 return;
                             }
 
-                            if (message.Text == "/start")
-                            {
-                                await HandleStartCommand(message);
-                            }
 
                             if (_admins.Contains(user.Username))
                             {
@@ -250,7 +259,7 @@ namespace AATelegramBot
         }
         private async Task UpdateUserPrefix(long chatId)
         {
-            __changePrefixes.TryAdd(chatId, true);
+            _changePrefixes.TryAdd(chatId, true);
 
             await _botClient.SendTextMessageAsync(
                 chatId: chatId,
@@ -282,7 +291,7 @@ namespace AATelegramBot
                 {
                     user.Data.Prefix = messageText;
                     await _userRepository.UpdateUser(user);
-                    __changePrefixes.TryRemove(chatId, out bool value);
+                    _changePrefixes.TryRemove(chatId, out bool value);
 
                     if (user.Data.IsPaid)
                     {

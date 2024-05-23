@@ -102,7 +102,7 @@ namespace AATelegramBot.Ftp
         }
         private async Task SetPrefix(UserData userData)
         {
-            var readerInfo = await GetUserFromFile(userData.UserDataId);
+            var readerInfo = await GetUserReaderInfoFromFile(userData.UserDataId);
             var resultPrefix = CreateResultPrefix(userData);
 
             if (readerInfo.IsExist)
@@ -115,7 +115,7 @@ namespace AATelegramBot.Ftp
         }
         private async Task<bool> DeletePrefix(UserData userData)
         {
-            var readerInfo = await GetUserFromFile(userData.UserDataId);
+            var readerInfo = await GetUserReaderInfoFromFile(userData.UserDataId);
 
             if (readerInfo.IsExist)
             {
@@ -125,7 +125,7 @@ namespace AATelegramBot.Ftp
 
             return false;
         }
-        private async Task<UserReaderInfo> GetUserFromFile(long id)
+        private async Task<UserReaderInfo> GetUserReaderInfoFromFile(long id)
         {
             using var reader = new StreamReader(_localPath, Encoding.UTF8);
             bool isExist = false;
