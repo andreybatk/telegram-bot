@@ -162,8 +162,8 @@ namespace AATelegramBot
                     new[]
                     {
                         InlineKeyboardButton.WithCallbackData("Изменить все данные", "register"),
-                        InlineKeyboardButton.WithCallbackData("Изменить префикс", $"update_prefix:{message.Chat.Id}"),
-                        InlineKeyboardButton.WithCallbackData("Связаться для оплаты", $"contacts:{message.Chat.Id}")
+                        InlineKeyboardButton.WithCallbackData("Изменить префикс", $"update_prefix:{chatId}"),
+                        InlineKeyboardButton.WithCallbackData("Связаться для оплаты", $"contacts:{chatId}")
                     }
                 };
 
@@ -311,7 +311,7 @@ namespace AATelegramBot
 
             await _botClient.SendTextMessageAsync(
                 chatId: chatId,
-                text: "Введите тип привязки (ip, steamid, nick):"
+                text: "Введите один из типов привязки (ip, steamid, nick):"
             );
         }
         private async Task HandleUserRegistrationStep(Message message)
