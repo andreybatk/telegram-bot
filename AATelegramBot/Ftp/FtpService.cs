@@ -3,6 +3,8 @@ using AATelegramBot.Models;
 using FluentFTP;
 using FluentFTP.Helpers;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.Globalization;
 using System.Text;
 
 namespace AATelegramBot.Ftp
@@ -192,7 +194,8 @@ namespace AATelegramBot.Ftp
         }
         private string CreateResultPrefix(UserData userData)
         {
-            return $"[{userData.UserDataId}] \"{userData.EndTime}\" \"{userData.BindType}\" \"{userData.BindData}\" \"!g[{userData.Prefix}]!d\"";
+            string formattedDateTime = userData.EndTime?.ToString(new CultureInfo("ru"));
+            return $"[{userData.UserDataId}] \"{formattedDateTime}\" \"{userData.BindType}\" \"{userData.BindData}\" \"!g[{userData.Prefix}]!d\"";
         }
     }
 }
