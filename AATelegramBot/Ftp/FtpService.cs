@@ -42,9 +42,8 @@ namespace AATelegramBot.Ftp
                 throw new ArgumentNullException($"{nameof(userData)} is null!");
             }
 
-            await DownloadFileAsync();
-
             semaphore.Wait();
+            await DownloadFileAsync();
             await SetPrefix(userData);
             semaphore.Release();
 
@@ -57,9 +56,8 @@ namespace AATelegramBot.Ftp
                 throw new ArgumentNullException($"{nameof(userData)} is null!");
             }
 
-            await DownloadFileAsync();
-
             semaphore.Wait();
+            await DownloadFileAsync();
             var result = await DeletePrefix(userData);
             semaphore.Release();
 
