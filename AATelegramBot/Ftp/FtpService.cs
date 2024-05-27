@@ -47,12 +47,12 @@ namespace AATelegramBot.Ftp
             {
                 await DownloadFileAsync();
                 await SetPrefix(userData);
+                await UploadFileAsync();
             }
             finally
             {
                 semaphore.Release();
             }
-            await UploadFileAsync();
         }
         public async Task<bool> DeletePrefixFromFile(UserData? userData)
         {
@@ -67,15 +67,14 @@ namespace AATelegramBot.Ftp
             {
                 await DownloadFileAsync();
                 result = await DeletePrefix(userData);
+                if (result)
+                {
+                    await UploadFileAsync();
+                }
             }
             finally
             {
                 semaphore.Release();
-            }
-
-            if (result)
-            {
-                await UploadFileAsync();
             }
 
             return result;
@@ -88,28 +87,12 @@ namespace AATelegramBot.Ftp
             var status = await ftp.DownloadFile(_localPath, _remotePath, FtpLocalExists.Overwrite);
             if (status.IsFailure()) throw new InvalidOperationException("DownloadFileAsync is failure!");
         }
-        private async Task DownloadFileAsync(CancellationToken token)
-        {
-            using var ftp = new AsyncFtpClient(_host, _username, _password);
-            await ftp.Connect(token);
-
-            var status = await ftp.DownloadFile(_localPath, _remotePath, FtpLocalExists.Overwrite, token: token);
-            if (status.IsFailure()) throw new InvalidOperationException("DownloadFileAsync is failure!");
-        }
         private async Task UploadFileAsync()
         {
             using var ftp = new AsyncFtpClient(_host, _username, _password);
             await ftp.Connect();
 
             var status = await ftp.UploadFile(_localPath, _remotePath, FtpRemoteExists.Overwrite, true);
-            if (status.IsFailure()) throw new InvalidOperationException("UploadFileAsync is failure!");
-        }
-        private async Task UploadFileAsync(CancellationToken token)
-        {
-            using var ftp = new AsyncFtpClient(_host, _username, _password);
-            await ftp.Connect(token);
-
-            var status = await ftp.UploadFile(_localPath, _remotePath, FtpRemoteExists.Overwrite, true, token: token);
             if (status.IsFailure()) throw new InvalidOperationException("UploadFileAsync is failure!");
         }
         private async Task SetPrefix(UserData userData)
