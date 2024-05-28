@@ -67,7 +67,7 @@ namespace AATelegramBot
                             var user = message.From;
                             Console.WriteLine($"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}");
 
-                            if (message.Text == "/start" || message.Text == "/stop")
+                            if (message.Text == "/start" || message.Text == "/stop" || message.Text == "/profile")
                             {
                                 if (_registrationStates.ContainsKey(message.Chat.Id))
                                 {
@@ -247,11 +247,44 @@ namespace AATelegramBot
                 case "contacts":
                     await GetAdminInfo(callbackQuery.Message.Chat.Id);
                     break;
+                case "bindtype_ip":
+                    {
+                        var state = _registrationStates[callbackQuery.Message.Chat.Id];
+                        if(state != null)
+                        {
+                            state.UserData.BindType = "ip";
+                            state.State = "BindData";
+                            await _botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "Введите ip для привязки:");
+                        }
+                        break;
+                    }
+                case "bindtype_steamid":
+                    {
+                        var state = _registrationStates[callbackQuery.Message.Chat.Id];
+                        if (state != null)
+                        {
+                            state.UserData.BindType = "steamid";
+                            state.State = "BindData";
+                            await _botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "Введите steamid для привязки:");
+                        }
+                        break;
+                    }
+                case "bindtype_nick":
+                    {
+                        var state = _registrationStates[callbackQuery.Message.Chat.Id];
+                        if (state != null)
+                        {
+                            state.UserData.BindType = "nick";
+                            state.State = "BindData";
+                            await _botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "Введите nick для привязки:");
+                        }
+                        break;
+                    }
             }
         }
         private async Task GetAdminInfo(long chatId)
         {
-            var admin = _admins.Count > 0 ? _admins[0] : "Администратора нет.";
+            var admin = _admins.Count > 0 ? _admins[0] : "Администраторов нет.";
             await _botClient.SendTextMessageAsync(
                 chatId: chatId,
                 text: $"Связь для оплаты: @{admin}"
@@ -271,7 +304,7 @@ namespace AATelegramBot
             var chatId = message.Chat.Id;
             var messageText = message.Text;
 
-            if(messageText.Length < 1 || messageText.Length > 32)
+            if (messageText.Length < 1 || messageText.Length > 32)
             {
                 await _botClient.SendTextMessageAsync(chatId, "Ошибка. Префикс должен быть не меньше 1 и не больше 32 символов. Введите данные заново.");
                 return;
@@ -318,9 +351,20 @@ namespace AATelegramBot
                 State = "BindType"
             });
 
+            var buttons = new List<InlineKeyboardButton[]>
+                {
+                    new[]
+                    {
+                        InlineKeyboardButton.WithCallbackData("ip", $"bindtype_ip:{chatId}"),
+                        InlineKeyboardButton.WithCallbackData("steamid", $"bindtype_steamid:{chatId}"),
+                        InlineKeyboardButton.WithCallbackData("nick", $"bindtype_nick:{chatId}")
+                    }
+                };
+
             await _botClient.SendTextMessageAsync(
                 chatId: chatId,
-                text: "Введите один из типов привязки (ip, steamid, nick):"
+                text: "Выберите тип привязки:",
+                replyMarkup: new InlineKeyboardMarkup(buttons)
             );
         }
         private async Task HandleUserRegistrationStep(Message message)
@@ -332,15 +376,21 @@ namespace AATelegramBot
             switch (state.State)
             {
                 case "BindType":
-                    if (messageText != "ip" && messageText != "steamid" && messageText != "nick")
-                    {
-                        await _botClient.SendTextMessageAsync(chatId, "Ошибка. Тип привязки должен быть: ip, steamid, nick. Введите данные заново.");
-                        return;
-                    }
+                    var buttons = new List<InlineKeyboardButton[]>
+                        {
+                            new[]
+                            {
+                                InlineKeyboardButton.WithCallbackData("ip", $"bindtype_ip:{chatId}"),
+                                InlineKeyboardButton.WithCallbackData("steamid", $"bindtype_steamid:{chatId}"),
+                                InlineKeyboardButton.WithCallbackData("nick", $"bindtype_nick:{chatId}")
+                            }
+                        };
 
-                    state.UserData.BindType = messageText;
-                    state.State = "BindData";
-                    await _botClient.SendTextMessageAsync(chatId, "Введите данные для привязки:");
+                    await _botClient.SendTextMessageAsync(
+                        chatId: chatId,
+                        text: "Выберите один из типов привязки (ip, steamid, nick):",
+                        replyMarkup: new InlineKeyboardMarkup(buttons)
+                    ); 
                     break;
                 case "BindData":
                     if (messageText.Length < 1 || messageText.Length > 32)
@@ -443,7 +493,7 @@ namespace AATelegramBot
                     var resultDelete = await _ftpService.DeletePrefixFromFile(user.Data);
                     var resultMessage = "";
 
-                    if(result && resultDelete)
+                    if (result && resultDelete)
                     {
                         resultMessage += $"Пользователь @{user.Username} помечен как не оплачен и удален из prefixlist на сервере.";
                     }
